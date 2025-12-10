@@ -88,7 +88,7 @@
         "@formatjs/intl-segmenter": "^11.5.7",
         "@matrix-org/analytics-events": "^0.30.0",
         "@matrix-org/emojibase-bindings": "^1.5.0",
-        "@matrix-org/react-sdk-module-api": "^2.4.0",
+        "@matrix-org/react-sdk-module-api": "submarinemonitor/matrix-react-sdk-module-api",
         "@matrix-org/spec": "^1.7.0",
         "@sentry/browser": "^10.0.0",
         "@types/png-chunks-extract": "^1.0.2",
