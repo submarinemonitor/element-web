@@ -89,17 +89,38 @@ export default class WebPlatform extends BasePlatform {
         });
     };
 
+//    private onServiceWorkerPostMessage = (event: MessageEvent): void => {
+//        try {
+//            if (event.data?.["type"] === "userinfo" && event.data?.["responseKey"]) {
+//                const userId = localStorage.getItem("mx_user_id");
+//                const deviceId = localStorage.getItem("mx_device_id");
+//                const homeserver = MatrixClientPeg.get()?.getHomeserverUrl();
+//                event.source!.postMessage({
+//                    responseKey: event.data["responseKey"],
+//                    userId,
+//                    deviceId,
+//                    homeserver,
+//                });
+//            }
+//        } catch (e) {
+//            console.error("Error responding to service worker: ", e);
+//        }
+//    };
+
+
     private onServiceWorkerPostMessage = (event: MessageEvent): void => {
         try {
             if (event.data?.["type"] === "userinfo" && event.data?.["responseKey"]) {
                 const userId = localStorage.getItem("mx_user_id");
                 const deviceId = localStorage.getItem("mx_device_id");
                 const homeserver = MatrixClientPeg.get()?.getHomeserverUrl();
-                event.source!.postMessage({
+                const accessToken = localStorage.getItem("mx_access_token");
+                (event.source as ServiceWorker).postMessage({
                     responseKey: event.data["responseKey"],
                     userId,
                     deviceId,
                     homeserver,
+                    accessToken,
                 });
             }
         } catch (e) {

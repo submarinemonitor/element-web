@@ -66,8 +66,14 @@ global.addEventListener("fetch", (event: FetchEvent) => {
 
                 // Locate the access token and homeserver url
                 // @ts-expect-error - service worker types are not available. See 'fetch' event handler.
+//                const client = await global.clients.get(event.clientId);
+//                auth = await getAuthData(client);
+
                 const client = await global.clients.get(event.clientId);
+                console.log("[ServiceWorker] Client:", client, "clientId:", event.clientId);
                 auth = await getAuthData(client);
+                console.log("[ServiceWorker] Auth data:", auth?.homeserver, "hasToken:", !!auth?.accessToken);
+
 
                 // Is this request actually going to the homeserver?
                 const isRequestToHomeServer = url.origin === new URL(auth.homeserver).origin;
@@ -117,36 +123,52 @@ async function tryUpdateServerSupportMap(clientApiUrl: string, accessToken?: str
 
 // Ideally we'd use the `Client` interface for `client`, but since it's not available (see 'fetch' listener), we use
 // unknown for now and force-cast it to something close enough later.
-async function getAuthData(client: unknown): Promise<{ accessToken: string; homeserver: string }> {
+
+
+
+//async function getAuthData(client: unknown): Promise<{ accessToken: string; homeserver: string }> {
     // Access tokens are encrypted at rest, so while we can grab the "access token", we'll need to do work to get the
     // real thing.
-    const encryptedAccessToken = await idbLoad("account", "mx_access_token");
+//    const encryptedAccessToken = await idbLoad("account", "mx_access_token");
+
 
     // We need to extract a user ID and device ID from localstorage, which means calling WebPlatform for the
     // read operation. Service workers can't access localstorage.
-    const { userId, deviceId, homeserver } = await askClientForUserIdParams(client);
+//    const { userId, deviceId, homeserver } = await askClientForUserIdParams(client);
 
     // ... and this is why we need the user ID and device ID: they're index keys for the pickle key table.
-    const pickleKeyData = await idbLoad("pickleKey", [userId, deviceId]);
-    if (pickleKeyData && (!pickleKeyData.encrypted || !pickleKeyData.iv || !pickleKeyData.cryptoKey)) {
-        throw new Error("SW: Invalid pickle key loaded - ignoring");
-    }
+//    const pickleKeyData = await idbLoad("pickleKey", [userId, deviceId]);
+//    if (pickleKeyData && (!pickleKeyData.encrypted || !pickleKeyData.iv || !pickleKeyData.cryptoKey)) {
+//        throw new Error("SW: Invalid pickle key loaded - ignoring");
+//    }
 
     // Finally, try decrypting the thing and return that. This may fail, but that's okay.
-    try {
-        const pickleKey = await buildAndEncodePickleKey(pickleKeyData, userId, deviceId);
-        const accessToken = await tryDecryptToken(pickleKey, encryptedAccessToken, ACCESS_TOKEN_IV);
-        return { accessToken, homeserver };
-    } catch (e) {
-        throw new Error("SW: Error decrypting access token.", { cause: e });
+//    try {
+//        const pickleKey = await buildAndEncodePickleKey(pickleKeyData, userId, deviceId);
+//        const accessToken = await tryDecryptToken(pickleKey, encryptedAccessToken, ACCESS_TOKEN_IV);
+//        return { accessToken, homeserver };
+//    } catch (e) {
+//        throw new Error("SW: Error decrypting access token.", { cause: e });
+//    }
+//}
+
+
+async function getAuthData(client: unknown): Promise<{ accessToken: string; homeserver: string }> {
+    const { homeserver, accessToken } = await askClientForUserIdParams(client);
+
+    if (!accessToken) {
+        throw new Error("SW: No access token from client");
     }
+
+    return { accessToken, homeserver };
 }
 
 // Ideally we'd use the `Client` interface for `client`, but since it's not available (see 'fetch' listener), we use
 // unknown for now and force-cast it to something close enough inside the function.
 async function askClientForUserIdParams(
     client: unknown,
-): Promise<{ userId: string; deviceId: string; homeserver: string }> {
+//): Promise<{ userId: string; deviceId: string; homeserver: string }> {
+): Promise<{ userId: string; deviceId: string; homeserver: string; accessToken: string }> {
     return new Promise((resolve, reject) => {
         // Dev note: this uses postMessage, which is a highly insecure channel. postMessage is typically visible to other
         // tabs, windows, browser extensions, etc, making it far from ideal for sharing sensitive information. This is

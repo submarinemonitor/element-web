@@ -315,6 +315,14 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         },
                     });
                     dis.dispatch({ action: "message_sent" });
+                    window.parent.postMessage(
+                        {
+                            type: "element_message_sent",
+                            roomId: roomId,
+                            body: content!.body,
+                        },
+                        "*"
+                    );
                 }
                 break;
             }
